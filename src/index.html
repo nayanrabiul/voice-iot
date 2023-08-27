@@ -39,8 +39,19 @@
 
                 <div
                     id="transcription"
-                    class="my-3 border-2 w-80 p-3 h-32"
+                    class="my-3 border-2 w-96 p-3 min-h-4"
                 ></div>
+
+                <!-- a load div untill the response come from api  , -->
+
+                <div
+                    id="load"
+                    class="hidden animate-ping inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"
+                ></div>
+
+                <div class="my-3 border-2 w-96 p-3 min-h-4">
+                    <p id="result-output" class="p-2"></p>
+                </div>
             </div>
         </section>
 
@@ -62,6 +73,12 @@
             </div>
         </section>
 
+        <!-- notificaiton alert div  -->
+        <div
+            id="notification"
+            class="absolute right-6 top-6 p-4 border rounded shadow hidden"
+        ></div>
+
         <footer class="absolute bottom-6 w-full">
             <p class="text-center">
                 Made with ❤️ by <a href="https://decodeit.org">DecodeIT</a>
@@ -75,6 +92,7 @@
             const btnState = document.getElementById("btnState");
             const transcriptionDiv = document.getElementById("transcription");
             const animationState = document.getElementById("animation");
+            let resultOutput = document.getElementById("result-output");
 
             //set audioSource to microphone to id audioSource
             navigator.mediaDevices
@@ -123,6 +141,8 @@
                         event.results[event.results.length - 1][0].transcript;
                     transcriptionDiv.textContent = result;
 
+                    //start loader
+
                     //get fro '/gpt' api, ser result value
                     fetch("/gpt", {
                         method: "POST",
@@ -133,8 +153,26 @@
                     })
                         .then((response) => response.json())
                         .then((data) => {
-                            console.log("Success:", data);
-                            bulbControl(data);
+                            let types = data.type || "";
+                            let content = data.content || "";
+                            switch (types) {
+                                case "turn_on_light":
+                                    turn_on_light(data.color ?? null);
+                                    break;
+                                case "turn_off_light":
+                                    turn_off_light(data.color ?? null);
+                                    break;
+                                case "content":
+                                    console.log(content);
+                                    resultOutput.innerHTML = content;
+                                    break;
+                                case "error":
+                                    showNotification(content);
+
+                                default:
+                                    console.log("No type found");
+                                    alert("No type found");
+                            }
                         })
                         .catch((error) => {
                             console.error("Error:", error);
@@ -143,9 +181,7 @@
             };
 
             //helper function
-            let bulbControl = (data) => {
-                let color = data?.color || "null";
-
+            let turn_on_light = (color) => {
                 let bulbs = {
                     red: document.getElementById("red-bulb"),
                     green: document.getElementById("green-bulb"),
@@ -167,8 +203,59 @@
                 } else if (color === "blue") {
                     bulbs.blue.classList.add("bg-blue-400");
                 } else {
-                    console.log("No color found");
-                    alert("No color found");
+                    //make all bulb to off state
+                    Object.keys(bulbs).forEach((key) => {
+                        bulbs[key].classList.remove("bg-red-400");
+                        bulbs[key].classList.remove("bg-green-400");
+                        bulbs[key].classList.remove("bg-blue-400");
+                    });
+
+                    //show notification
+                    showNotification(" লাল , নিল বা সবুজ  এর ভিতর পছন্দ করুন");
+                }
+            };
+            let turn_off_light = (color) => {
+                let bulbs = {
+                    red: document.getElementById("red-bulb"),
+                    green: document.getElementById("green-bulb"),
+                    blue: document.getElementById("blue-bulb"),
+                };
+
+                switch (color) {
+                    case "red":
+                        bulbs.red.classList.remove("bg-red-400");
+                        break;
+                    case "green":
+                        bulbs.green.classList.remove("bg-green-400");
+                        break;
+                    case "blue":
+                        bulbs.blue.classList.remove("bg-blue-400");
+                        break;
+                    default:
+                        //show notification
+                        showNotification(
+                            "  লাল , নিল বা সবুজ এর ভিতর পছন্দ করুন"
+                        );
+                }
+            };
+
+            let showNotification = (message) => {
+                let notification = document.getElementById("notification");
+                //show for 2 seconds
+                notification.classList.remove("hidden");
+                notification.classList.add("bg-orange-400");
+                notification.innerHTML = message;
+                setTimeout(() => {
+                    notification.classList.add("hidden");
+                }, 2000);
+            };
+
+            let toggleLoader = (bool = false) => {
+                let load = document.getElementById("load");
+                if (bool) {
+                    load.classList.remove("hidden");
+                } else {
+                    load.classList.add("hidden");
                 }
             };
         </script>

@@ -9,14 +9,15 @@ app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
 
-app.post("/gpt", (req, res) => {
+app.post("/gpt", async (req, res) => {
     let query: string = req.body.text;
     //integration with gpt
-    let data = require("./controller/gpt").ActionFromUserQuery(res, query);
+    let data = await require("./controller/gpt").HandleActionFromUserQuery(
+        query
+    );
+    console.log("🚀 ~ file: index.ts:16 ~ app.post ~ data:", data);
 
-    res.status(200).json(data);
-
-    //return response
+    res.send(data);
 });
 
 app.listen(3000, () => {

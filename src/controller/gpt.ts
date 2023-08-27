@@ -6,93 +6,113 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export const ActionFromUserQuery = (res, query: string) => {
-    //define function descriptions for the chatgpt
-    const functionDescriptions = [
+export const HandleActionFromUserQuery = (query: string) => {
+    return FunciotnTrigeerFromQuery(query);
+};
+
+const FunciotnTrigeerFromQuery = async (query: string) => {
+    //each possible function do a specific task
+    const possibleFuncitonsAiToUse = [
         {
-            name: "control_light",
+            name: "turn_on_light",
             description:
-                "Make green, blue, or red light turn on or off one at a time",
+                "chose  blue, red or green or unknow light/bulb color ",
             parameters: {
                 type: "object",
                 properties: {
                     color: {
                         type: "string",
                         description:
-                            "the color of the light, should be red or green or blue",
-                        enum: ["red", "green", "blue"],
+                            "chose  blue, red or green or unknow light/bulb color ",
+                        enum: ["red", "green", "blue", "unknown"],
+                    },
+                },
+            },
+        },
+        {
+            name: "turn_off_light",
+            description: "turn off the light",
+            parameters: {
+                type: "object",
+                properties: {
+                    color: {
+                        type: "string",
+                        description:
+                            "chose  blue, red or green or unknow light/bulb color ",
+                        enum: ["red", "green", "blue", "unknown"],
                     },
                 },
             },
         },
     ];
 
-    //this function is used to control the light
-    function controlLight(color) {
-        if (color === "red") {
-            res.status(200).json({ color: "red" });
-        } else if (color === "green") {
-            res.status(200).json({ color: "green" });
-        } else if (color === "blue") {
-            res.status(200).json({ color: "blue" });
-        }
-    }
-
-    //this function is used to call the function from the chatgpt response
-    function functionCall(aiResponse) {
-        const functionCall = aiResponse.choices[0].message.function_call;
-        const functionName = functionCall.name;
-        const arguments_ = functionCall.arguments;
-        if (functionName === "control_light") {
-            const state = JSON.parse(arguments_).state;
-            return controlLight(state);
-        } else {
-            return;
-        }
-    }
-
-    //this function is used to ask the chatgpt to call the function
+    //first get the general response from the chatgpt, then check if the response is a function call
+    //if it is a function call then trigger the right function
+    //or return the content of the response
     let messages = [{ role: "user", content: query }];
-    async function askToCallFunction(query) {
-        const response = await openai.chat.completions.create({
+    console.log("start chating");
+    let response = null;
+    try {
+        response = await openai.chat.completions.create({
             model: "gpt-3.5-turbo-0613", // work on gpt-4-0613 and gpt-3.5-turbo-0613
             messages: messages,
-            functions: functionDescriptions,
+            functions: possibleFuncitonsAiToUse,
             function_call: "auto",
         });
-
-        console.log(response);
-
+    } catch (e) {
         return {
-            color: "red  ",
+            type: "error",
+            content: e.message,
         };
-
-        // while (response.choices[0].finish_reason === "function_call") {
-        //     const functionResponse = functionCall(response);
-        //     messages.push({
-        //         role: "function",
-        //         name: response.choices[0].message.function_call.name,
-        //         content: JSON.stringify(functionResponse),
-        //     });
-
-        //     let response = await openai.Completion.create({
-        //         engine: "davinci",
-        //         prompt: "",
-        //         maxTokens: 1024,
-        //         n: 1,
-        //         stop: "\n",
-        //         temperature: 0.5,
-        //         presencePenalty: 0,
-        //         frequencyPenalty: 0,
-        //         bestOf: 1,
-        //         functionDescriptions: functionDescriptions,
-        //         messages: messages,
-        //         functionCall: "auto",
-        //     });
-
-        //     console.log("response: ", response);
-        // }
     }
 
-    askToCallFunction(query);
+    //response can be a function call or a content
+    //if content then return the content
+    let content = response.choices[0].message.content
+        ? response.choices[0].message.content
+        : null;
+    let function_call = response.choices[0].message.function_call
+        ? response.choices[0].message.function_call
+        : null;
+
+    if (!!content && !function_call) {
+        return {
+            type: "content",
+            content,
+        };
+    } else if (!content && !!function_call) {
+        let functionName = function_call.name;
+        let arguments_ = function_call.arguments;
+
+        //handle the function based on the name
+        switch (functionName) {
+            case "turn_on_light":
+                return turn_on_light(JSON.parse(arguments_).color ?? "unknown");
+
+            case "turn_off_light":
+                return turn_off_light(
+                    JSON.parse(arguments_).color ?? "unknown"
+                );
+
+            default:
+                return {
+                    type: "color",
+                    color: "unknown",
+                };
+        }
+    }
+};
+
+let turn_on_light = (color) => {
+    return {
+        type: "turn_on_light",
+        color,
+    };
+};
+
+let turn_off_light = (color) => {
+    return {
+        type: "turn_off_light",
+        color: color,
+    };
 };
