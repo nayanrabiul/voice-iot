@@ -62,7 +62,7 @@ const FunciotnTrigeerFromQuery = async (query: string) => {
     } catch (e) {
         return {
             type: "error",
-            content: e.message,
+            content: "Too frequent requests. We support 3 requests per minute",
         };
     }
 
@@ -93,7 +93,6 @@ const FunciotnTrigeerFromQuery = async (query: string) => {
                 return turn_off_light(
                     JSON.parse(arguments_).color ?? "unknown"
                 );
-
             default:
                 return {
                     type: "color",

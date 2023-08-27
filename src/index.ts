@@ -12,6 +12,7 @@ app.get("/", (req, res) => {
 app.post("/gpt", async (req, res) => {
     let query: string = req.body.text;
     //integration with gpt
+
     let data = await require("./controller/gpt").HandleActionFromUserQuery(
         query
     );

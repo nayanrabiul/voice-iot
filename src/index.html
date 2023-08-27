@@ -43,11 +43,14 @@
                 ></div>
 
                 <!-- a load div untill the response come from api  , -->
+                <div class="inline-flex items-center space-x-2 my-5" id="load">
+                    <div
+                        class="animate-pulse h-4 w-4 bg-gray-400 rounded-full"
+                    ></div>
+                    <span>Loading...</span>
+                </div>
 
-                <div
-                    id="load"
-                    class="hidden animate-ping inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"
-                ></div>
+                <!-- result output  -->
 
                 <div class="my-3 border-2 w-96 p-3 min-h-4">
                     <p id="result-output" class="p-2"></p>
@@ -93,6 +96,8 @@
             const transcriptionDiv = document.getElementById("transcription");
             const animationState = document.getElementById("animation");
             let resultOutput = document.getElementById("result-output");
+            let loader = document.getElementById("load");
+            toggleLoader(false);
 
             //set audioSource to microphone to id audioSource
             navigator.mediaDevices
@@ -142,6 +147,7 @@
                     transcriptionDiv.textContent = result;
 
                     //start loader
+                    toggleLoader(true);
 
                     //get fro '/gpt' api, ser result value
                     fetch("/gpt", {
@@ -153,6 +159,10 @@
                     })
                         .then((response) => response.json())
                         .then((data) => {
+                            console.log(
+                                "🚀 ~ file: index.html:156 ~ .then ~ data:",
+                                data
+                            );
                             let types = data.type || "";
                             let content = data.content || "";
                             switch (types) {
@@ -168,15 +178,15 @@
                                     break;
                                 case "error":
                                     showNotification(content);
-
                                 default:
-                                    console.log("No type found");
-                                    alert("No type found");
+                                    showNotification(content);
                             }
                         })
                         .catch((error) => {
                             console.error("Error:", error);
+                            toggleLoader(false);
                         });
+                    toggleLoader(false);
                 };
             };
 
@@ -247,10 +257,11 @@
                 notification.innerHTML = message;
                 setTimeout(() => {
                     notification.classList.add("hidden");
-                }, 2000);
+                }, 3000);
             };
 
-            let toggleLoader = (bool = false) => {
+            let toggleLoader = (bool) => {
+                console.log("here");
                 let load = document.getElementById("load");
                 if (bool) {
                     load.classList.remove("hidden");
