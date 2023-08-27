@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Google Speech-to-Text with btnState</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <style>
+            select option {
+                padding: 10px;
+            }
+        </style>
+    </head>
+    <body class="max-w-2xl p-3 py-12 mx-auto relative h-screen">
+        <h1 class="text-3xl uppercase mb-6">APITSOFT - অ্যাসিস্ট্যান্ট</h1>
+
+        <!-- chose microphone -->
+        <section class="my-3">
+            <label for="audioSource">Choose a microphone:</label>
+            <br />
+            <select id="audioSource" class="my-3 border-2 px-3 py-2">
+                <option value="default" disabled>Select microphone</option>
+            </select>
+        </section>
+
+        <!-- status section  -->
+        <section class="my-3">
+            <div>
+                <button
+                    class="px-4 py-2 rounded border-2 shadow hover:shadow-xl flex items-center"
+                    id="btnState"
+                    onclick="startSpeaking()"
+                >
+                    Start Listening
+                    <div
+                        id="animation"
+                        class="ml-3 hidden animate-ping inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"
+                    ></div>
+                </button>
+
+                <div
+                    id="transcription"
+                    class="my-3 border-2 w-80 p-3 h-32"
+                ></div>
+            </div>
+        </section>
+
+        <!-- 3 bulb , red green blue , this section float right middle . both light has on statte, initially all disable means off -->
+        <section class="absolute right-12 top-1/2 transform -translate-y-1/2">
+            <div class="flex flex-col items-center space-y-12" id="bulb">
+                <div
+                    id="red-bulb"
+                    class="w-16 h-16 rounded-full bg-red-100"
+                ></div>
+                <div
+                    id="green-bulb"
+                    class="w-16 h-16 rounded-full bg-green-100"
+                ></div>
+                <div
+                    id="blue-bulb"
+                    class="w-16 h-16 rounded-full bg-blue-100"
+                ></div>
+            </div>
+        </section>
+
+        <footer class="absolute bottom-6 w-full">
+            <p class="text-center">
+                Made with ❤️ by <a href="https://decodeit.org">DecodeIT</a>
+            </p>
+        </footer>
+
+        <script>
+            //elements
+            const audioSource = document.getElementById("audioSource");
+            const Button = document.getElementById("startButton");
+            const btnState = document.getElementById("btnState");
+            const transcriptionDiv = document.getElementById("transcription");
+            const animationState = document.getElementById("animation");
+
+            //set audioSource to microphone to id audioSource
+            navigator.mediaDevices
+                .enumerateDevices()
+                .then((devices) => {
+                    devices.forEach((device) => {
+                        if (device.kind === "audioinput") {
+                            const option = document.createElement("option");
+                            option.value = device.deviceId;
+                            option.text = device.label;
+                            audioSource.appendChild(option);
+                        }
+                    });
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+
+            //initialize speech recognition
+            const SpeechRecognition =
+                window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+
+            //continuous = false; means stop automatically after speech is complete
+            recognition.continuous = false;
+            recognition.lang = "bn-BD";
+
+            let startSpeaking = async () => {
+                //listen through microphone
+                recognition.start();
+
+                //handle some events
+
+                //run callback function when user start speaking
+                recognition.onstart = () => {
+                    //make button to listening state
+                    animationState.classList.remove("hidden");
+                };
+
+                //run callback function when user automatically stop speaking
+                recognition.onresult = (event) => {
+                    //make button to normal state
+                    animationState.classList.add("hidden");
+
+                    const result =
+                        event.results[event.results.length - 1][0].transcript;
+                    transcriptionDiv.textContent = result;
+
+                    //get fro '/gpt' api, ser result value
+                    fetch("/gpt", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ text: result }),
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            console.log("Success:", data);
+                            bulbControl(data);
+                        })
+                        .catch((error) => {
+                            console.error("Error:", error);
+                        });
+                };
+            };
+
+            //helper function
+            let bulbControl = (data) => {
+                let color = data?.color || "null";
+
+                let bulbs = {
+                    red: document.getElementById("red-bulb"),
+                    green: document.getElementById("green-bulb"),
+                    blue: document.getElementById("blue-bulb"),
+                };
+
+                //make all bulb to off state
+                Object.keys(bulbs).forEach((key) => {
+                    bulbs[key].classList.remove("bg-red-400");
+                    bulbs[key].classList.remove("bg-green-400");
+                    bulbs[key].classList.remove("bg-blue-400");
+                });
+
+                //make bulb to on state
+                if (color === "red") {
+                    bulbs.red.classList.add("bg-red-400");
+                } else if (color === "green") {
+                    bulbs.green.classList.add("bg-green-400");
+                } else if (color === "blue") {
+                    bulbs.blue.classList.add("bg-blue-400");
+                } else {
+                    console.log("No color found");
+                    alert("No color found");
+                }
+            };
+        </script>
+    </body>
+</html>
