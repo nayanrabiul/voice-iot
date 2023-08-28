@@ -6,11 +6,7 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export const HandleActionFromUserQuery = (query: string) => {
-    return FunciotnTrigeerFromQuery(query);
-};
-
-const FunciotnTrigeerFromQuery = async (query: string) => {
+export const HandleActionFromUserQuery = async (query) => {
     //each possible function do a specific task
     const possibleFuncitonsAiToUse = [
         {
@@ -66,7 +62,10 @@ const FunciotnTrigeerFromQuery = async (query: string) => {
             function_call: "auto",
         });
     } catch (e) {
-        console.log(e.message);
+        console.log(
+            "🚀 ~ file: index.js:70 ~ FunciotnTrigeerFromQuery ~ e:",
+            e.message
+        );
         return {
             type: "error",
             content: "Too frequent requests. We support 3 requests per minute",
