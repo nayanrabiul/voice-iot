@@ -101,21 +101,15 @@
             const animationState = document.getElementById("animation");
             let resultOutput = document.getElementById("result-output");
 
+            //get permission for microphone
             navigator.mediaDevices
-                .enumerateDevices()
-                .then((devices) => {
-                    //if no device found
-                    devices.forEach((device) => {
-                        if (device.kind === "audioinput") {
-                            const option = document.createElement("option");
-                            option.value = device.deviceId;
-                            option.text = device.label;
-                            audioSource.appendChild(option);
-                        }
-                    });
+                .getUserMedia({ audio: true })
+                .then((stream) => {
+                    stream.getTracks().forEach((track) => track.stop());
+                    populateAudioDevices();
                 })
                 .catch((error) => {
-                    console.log(error);
+                    console.error("Error:", error);
                 });
 
             //initialize speech recognition
@@ -271,6 +265,25 @@
                     //add style to hide loader
                     load.style.display = "none";
                 }
+            };
+
+            let populateAudioDevices = () => {
+                navigator.mediaDevices
+                    .enumerateDevices()
+                    .then((devices) => {
+                        //if no device found
+                        devices.forEach((device) => {
+                            if (device.kind === "audioinput") {
+                                const option = document.createElement("option");
+                                option.value = device.deviceId;
+                                option.text = device.label;
+                                audioSource.appendChild(option);
+                            }
+                        });
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                    });
             };
         </script>
     </body>

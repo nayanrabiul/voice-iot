@@ -50,11 +50,12 @@ const FunciotnTrigeerFromQuery = async (query: string) => {
     //if it is a function call then trigger the right function
     //or return the content of the response
 
-    let iniit = ` your indentiy: Your are a intelligent robot built by Decodeit.org 
-    your role :  you are able to chose function to do a specific task or provide information to the user
-    user prompt: ${query}
-    `;
-    let messages = [{ role: "user", content: iniit }];
+    //write a prompt to replay to user query add that bot is cerated by decodeit.org
+    let prompt = `The following is a conversation with an AI assistant make by DECODEIT.ORG . The assistant is helpful, creative, clever, and very friendly.
+    Human:${query}
+    AI:`;
+
+    let messages = [{ role: "user", content: prompt }];
     console.log("start chating");
     let response = null;
     try {
