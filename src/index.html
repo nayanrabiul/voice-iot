@@ -43,7 +43,11 @@
                 ></div>
 
                 <!-- a load div untill the response come from api  , -->
-                <div class="inline-flex items-center space-x-2 my-5" id="load">
+                <div
+                    class="inline-flex items-center space-x-2"
+                    id="load"
+                    style="display: none"
+                >
                     <div
                         class="animate-pulse h-4 w-4 bg-gray-400 rounded-full"
                     ></div>
@@ -96,13 +100,11 @@
             const transcriptionDiv = document.getElementById("transcription");
             const animationState = document.getElementById("animation");
             let resultOutput = document.getElementById("result-output");
-            let loader = document.getElementById("load");
-            toggleLoader(false);
 
-            //set audioSource to microphone to id audioSource
             navigator.mediaDevices
                 .enumerateDevices()
                 .then((devices) => {
+                    //if no device found
                     devices.forEach((device) => {
                         if (device.kind === "audioinput") {
                             const option = document.createElement("option");
@@ -181,12 +183,12 @@
                                 default:
                                     showNotification(content);
                             }
+                            toggleLoader(false);
                         })
                         .catch((error) => {
                             console.error("Error:", error);
                             toggleLoader(false);
                         });
-                    toggleLoader(false);
                 };
             };
 
@@ -260,13 +262,14 @@
                 }, 3000);
             };
 
-            let toggleLoader = (bool) => {
-                console.log("here");
+            let toggleLoader = (bool = false) => {
                 let load = document.getElementById("load");
                 if (bool) {
-                    load.classList.remove("hidden");
+                    //add style to show loader
+                    load.style.display = "inline-flex";
                 } else {
-                    load.classList.add("hidden");
+                    //add style to hide loader
+                    load.style.display = "none";
                 }
             };
         </script>

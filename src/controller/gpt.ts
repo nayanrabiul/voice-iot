@@ -49,7 +49,12 @@ const FunciotnTrigeerFromQuery = async (query: string) => {
     //first get the general response from the chatgpt, then check if the response is a function call
     //if it is a function call then trigger the right function
     //or return the content of the response
-    let messages = [{ role: "user", content: query }];
+
+    let iniit = ` your indentiy: Your are a intelligent robot built by Decodeit.org 
+    your role :  you are able to chose function to do a specific task or provide information to the user
+    user prompt: ${query}
+    `;
+    let messages = [{ role: "user", content: iniit }];
     console.log("start chating");
     let response = null;
     try {
