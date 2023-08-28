@@ -66,6 +66,7 @@ const FunciotnTrigeerFromQuery = async (query: string) => {
             function_call: "auto",
         });
     } catch (e) {
+        console.log(e.message);
         return {
             type: "error",
             content: "Too frequent requests. We support 3 requests per minute",
